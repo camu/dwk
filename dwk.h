@@ -3,10 +3,8 @@
 #ifndef __DWK_H
 #define __DWK_H
 
-#include "div.h"
-
 void dwk_init( );
-void add_div( Div _div );
+void add_div( void *_div );
 
 void draw_screen( );
 int draw_text( const char *_txt, int _x, int _y, int _w );

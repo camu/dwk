@@ -3,7 +3,7 @@
 
 include config.mk
 
-SRC = dwk.c draw.c div.c img.c
+SRC = dwk.c draw.c div.c img.c stuff.c
 OBJ = ${SRC:.c=.o}
 
 all: options dwk

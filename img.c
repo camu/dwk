@@ -1,5 +1,6 @@
 // See LICENSE for copyrite stuff
 
+#include "stuff.h"
 #include "img.h"
 #include "draw.h"
 #include <png.h>
@@ -11,21 +12,17 @@ extern Display *dpy;
 extern Window win;
 extern GC gc;
 
-int load_img( const char *_file, XImage **_ximg ) {
-	int l = strlen( _file );
-	int i, j;
-	for( i = j = 0; _file[i] != '.'; i++ )
-		if( i == l ) return 1;
-	char type[l-i];
-	for( i++; i+j < l; j++ )
-		type[j] = _file[i+j];
+int load_img( const char *_file, void *_ximg ) {
+	int a = filext( _file );
+	char type[strlen( _file )-a+1];
+	strcpy( type, _file+a+1 );
 
 	if( strcmp( type, "png" ) == 0 )
 		return load_png( _file, _ximg );
 	else return 1;
 }
 
-int load_png( const char *_file, XImage **_ximg ) {
+int load_png( const char *_file, void *_ximg ) {
 	FILE *img = fopen( _file, "rb" );
 	if( img == NULL ) return 2;
 
@@ -52,7 +49,7 @@ int load_png( const char *_file, XImage **_ximg ) {
 
 	png_bytep *rowp = png_get_rows( pngp, infop );
 
-	char data[w*h*4];
+	char *data = malloc( w*h*4 );
 	char *pixl = data;
 	int i, j; for( i = 0; i < h; i++ ) {
 		png_byte *row = rowp[i];
@@ -65,7 +62,8 @@ int load_png( const char *_file, XImage **_ximg ) {
 		}
 	}
 
-	*_ximg = XCreateImage( dpy, DefaultVisual( dpy, DefaultScreen( dpy ) ), 24, ZPixmap, 0, data, w, h, 32, 0 );
+	XImage **ximg = _ximg;
+	*ximg = XCreateImage( dpy, DefaultVisual( dpy, DefaultScreen( dpy ) ), 24, ZPixmap, 0, data, w, h, 32, 0 );
 
 	png_destroy_read_struct( &pngp, &infop, NULL );
 	fclose( img );

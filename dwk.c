@@ -1,6 +1,7 @@
 // See LICENSE for copyright info
 
 #include "config.h"
+#include "div.h"
 #include "dwk.h"
 #include "draw.h"
 #include "img.h"
@@ -31,8 +32,7 @@ int main( int argc, char *argv[] ) {
 	dwk_init( );
 
 	XImage *img = NULL;
-	XImage **imgp = &img;
-	load_png( argv[1], imgp );
+	load_img( argv[1], &img );
 	if( img == NULL ) dwk_err( "failed loading image" );
 
 	Div lipsum = create_div( );
@@ -46,7 +46,7 @@ int main( int argc, char *argv[] ) {
 	lis[len] = 0;
 	fclose( lif );
 	div_add_wid( &lipsum, create_wid( lis ) );
-	add_div( lipsum );
+	add_div( &lipsum );
 
 	XEvent ev;
 	for( ;; ) {
@@ -55,11 +55,10 @@ int main( int argc, char *argv[] ) {
 		case Expose:
 			draw_screen( );
 XPutImage( dpy, win, gc, img, 0, 0, 0, 0, 800, 600 );
-
 			break;
 		case ButtonPress:
-			XCloseDisplay( dpy );
 XDestroyImage( img );
+			XCloseDisplay( dpy );
 			return 0;
 		}
 	}
@@ -93,9 +92,10 @@ void dwk_init( ) {
 	XMapWindow( dpy, win );
 }
 
-void add_div( Div _div ) {
+void add_div( void *_div ) {
+	Div *div = _div;
 	all = realloc( all, sizeof( Div )*(++ndiv) );
-	all[ndiv-1] = _div;
+	all[ndiv-1] = *div;
 }
 
 void draw_screen( ) {
