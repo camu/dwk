@@ -10,8 +10,10 @@
 	3 if the size is not valid png
 	4 if bad color type
 */
-int load_img( const char *_file, void *_ximg );
+int load_img( const char *_file );
+int load_png( const char *_file );
 
-int load_png( const char *_file, void *_ximg );
+int ia_push_back( void *_ximg );
+void free_ia( );
 
 #endif

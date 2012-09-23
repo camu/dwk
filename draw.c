@@ -6,12 +6,17 @@
 #include <stdio.h>
 #include <X11/Xlib.h>
 
+#include "div.h"
+
 extern Display *dpy;
 extern Window win;
 extern GC gc;
 extern Colormap colmap;
 extern XFontStruct *xfs;
 extern int lh; // line height
+
+extern XImage **img_arr;
+extern int nimg;
 
 int draw_text( const char *_txt, int _x, int _y, int _w ) {
 	int x = _x, y = _y+lh;
@@ -58,6 +63,12 @@ int draw_text( const char *_txt, int _x, int _y, int _w ) {
 	}
 	XDrawString( dpy, win, gc, x, y += lh, txt+j, i-j );
 	return y;
+}
+
+int draw_img( int _index, int _x, int _y ) {
+	if( _index > nimg ) return _y;
+	XPutImage( dpy, win, gc, img_arr[_index], 0, 0, _x, _y, img_arr[_index]->width, img_arr[_index]->height );
+	return _y+img_arr[_index]->height;
 }
 
 void ch_col( const char *_fg, const char *_bg ) {

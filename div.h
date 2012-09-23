@@ -5,15 +5,14 @@
 
 typedef struct {
 	char *txt;
-} Widget;
-
-typedef struct {
-	Widget *wid;
-	int nwid;
+	int imgind;
 } Div;
 
-Widget create_wid( const char *_txt );
 Div create_div( );
-void div_add_wid( Div *_div, Widget _wid );
+
+void ch_txt( const char *_txt, void *_div );
+void ch_img( int _index, void *_div );
+
+void free_div( void *_div );
 
 #endif

@@ -20,6 +20,9 @@ Colormap colmap;
 XFontStruct *xfs;
 int lh; // line height
 
+extern XImage **img_arr;
+extern int nimg;
+
 Div *all;
 int ndiv;
 
@@ -31,11 +34,8 @@ int main( int argc, char *argv[] ) {
 
 	dwk_init( );
 
-	XImage *img = NULL;
-	load_img( argv[1], &img );
-	if( img == NULL ) dwk_err( "failed loading image" );
-
 	Div lipsum = create_div( );
+
 	FILE *lif = fopen( argv[2], "r" );
 	fseek( lif, 0, SEEK_END );
 	int len = ftell( lif );
@@ -45,7 +45,13 @@ int main( int argc, char *argv[] ) {
 		lis[i] = fgetc( lif );
 	lis[len] = 0;
 	fclose( lif );
-	div_add_wid( &lipsum, create_wid( lis ) );
+
+	ch_txt( lis, &lipsum );
+
+	int index = load_img( argv[1] );
+//	if( index < 0 ) dwk_err( "failed loading image" );
+	ch_img( index, &lipsum );
+
 	add_div( &lipsum );
 
 	XEvent ev;
@@ -54,10 +60,10 @@ int main( int argc, char *argv[] ) {
 		switch( ev.type ) {
 		case Expose:
 			draw_screen( );
-XPutImage( dpy, win, gc, img, 0, 0, 0, 0, 800, 600 );
 			break;
 		case ButtonPress:
-XDestroyImage( img );
+			free_div( &lipsum );
+			free_ia( );
 			XCloseDisplay( dpy );
 			return 0;
 		}
@@ -70,6 +76,8 @@ void dwk_init( ) {
 	all = malloc( 1 );
 	ndiv = 0;
 
+	img_arr = malloc( sizeof( XImage * ) );
+	nimg = 0;
 
 	char *dpy_env = getenv( "DISPLAY" );
 	if( dpy_env ) dpy = XOpenDisplay( dpy_env );
@@ -99,9 +107,12 @@ void add_div( void *_div ) {
 }
 
 void draw_screen( ) {
+	const int a = sizeof( Div );
 	int i, j; for( i = j = 0; i < ndiv; i++ ) {
-		if( all[i].nwid == 1 )
-			j = draw_text( all[i].wid[0].txt, 10, j, LINE_WIDTH )+10;
+		if( all[i*a].imgind != -1 )
+			j = draw_img( all[i*a].imgind, 10, j );
+		if( all[i*a].txt != NULL )
+			j = draw_text( all[i*a].txt, 10, j, LINE_WIDTH )+10;
 	}
 }
 

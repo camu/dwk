@@ -4,20 +4,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-Widget create_wid( const char *_txt ) {
-	Widget wid;
-	wid.txt = (char *)_txt;
-	return wid;
-}
-
 Div create_div( ) {
 	Div div;
-	div.wid = malloc( 1 );
-	div.nwid = 0;
+	div.txt = NULL;
+	div.imgind = -1;
 	return div;
 }
 
-void div_add_wid( Div *_div, Widget _wid ) {
-	_div->wid = realloc( _div->wid, sizeof( Widget )*(++_div->nwid) );
-	_div->wid[_div->nwid-1] = _wid;
+void ch_txt( const char *_txt, void *_div ) {
+	Div *div = _div;
+	div->txt = malloc( strlen( _txt )+1 );
+	strcpy( div->txt, _txt );
+}
+
+void ch_img( int _index, void *_div ) {
+	Div *div = _div;
+	div->imgind = _index;
+}
+
+void free_div( void *_div ) {
+	Div *div = _div;
+	free( div->txt );
 }

@@ -12,24 +12,27 @@ extern Display *dpy;
 extern Window win;
 extern GC gc;
 
-int load_img( const char *_file, void *_ximg ) {
+XImage **img_arr;
+int nimg;
+
+int load_img( const char *_file ) {
 	int a = filext( _file );
 	char type[strlen( _file )-a+1];
 	strcpy( type, _file+a+1 );
 
 	if( strcmp( type, "png" ) == 0 )
-		return load_png( _file, _ximg );
-	else return 1;
+		return load_png( _file );
+	else return -1;
 }
 
-int load_png( const char *_file, void *_ximg ) {
+int load_png( const char *_file ) {
 	FILE *img = fopen( _file, "rb" );
-	if( img == NULL ) return 2;
+	if( img == NULL ) return -2;
 
 	char head[8];
 	fread( head, 1, 8, img );
 	if( png_sig_cmp( (png_const_bytep )head, 0, 8 ) )
-		return 3;
+		return -3;
 
 	png_structp pngp = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
 	png_infop infop = png_create_info_struct( pngp );
@@ -41,7 +44,7 @@ int load_png( const char *_file, void *_ximg ) {
 	png_read_png( pngp, infop, PNG_TRANSFORM_IDENTITY, NULL );
 
 	if( png_get_color_type( pngp, infop ) != PNG_COLOR_TYPE_RGB )
-		return 4;
+		return -4;
 
 	int w = png_get_image_width( pngp, infop );
 	int h = png_get_image_height( pngp, infop );
@@ -62,11 +65,24 @@ int load_png( const char *_file, void *_ximg ) {
 		}
 	}
 
-	XImage **ximg = _ximg;
-	*ximg = XCreateImage( dpy, DefaultVisual( dpy, DefaultScreen( dpy ) ), 24, ZPixmap, 0, data, w, h, 32, 0 );
-
 	png_destroy_read_struct( &pngp, &infop, NULL );
 	fclose( img );
 
-	return 0;
+	XImage *ximg = XCreateImage( dpy, DefaultVisual( dpy, DefaultScreen( dpy ) ), 24, ZPixmap, 0, data, w, h, 32, 0 );
+	return ia_push_back( ximg );
+}
+
+int ia_push_back( void *_ximg ) {
+	XImage *ximg = _ximg;
+	img_arr = realloc( img_arr, sizeof( XImage * )*(nimg+1) );
+	img_arr[nimg] = ximg;
+	nimg++;
+	return nimg-1;
+}
+
+void free_ia( ) {
+	int i; for( i = 0; i < nimg; i++ )
+		XDestroyImage( img_arr[i] );
+	free( img_arr );
+	img_arr = NULL;
 }
