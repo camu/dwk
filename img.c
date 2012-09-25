@@ -53,19 +53,21 @@ int load_png( const char *_file ) {
 	int h = png_get_image_height( pngp, infop );
 //	int bpp = png_get_bit_depth( pngp, infop );
 	int ratio = CEIL( ((float)w/(float)IMG_COL_WIDTH) );
+	w /= ratio; h /= ratio;
 
 	png_bytep *rowp = png_get_rows( pngp, infop );
 
 	char *data = malloc( w*h*4 );
 	char *pixl = data;
+
 	int i, j; for( i = 0; i < h; i++ ) {
-		png_byte *row = rowp[i];
-		for( j = 0; j < w; j += ratio ) {
-				png_byte *pixel = row+j*3;
-				pixl[2] = pixel[0];
-				pixl[1] = pixel[1];
-				pixl[0] = pixel[2];
-				pixl += 4;
+		png_byte *row = rowp[i*ratio];
+		for( j = 0; j < w; j++ ) {
+			png_byte *pixel = row+j*3*ratio;
+			pixl[2] = pixel[0];
+			pixl[1] = pixel[1];
+			pixl[0] = pixel[2];
+			pixl += 4;
 		}
 	}
 
@@ -73,6 +75,7 @@ int load_png( const char *_file ) {
 	fclose( img );
 
 	XImage *ximg = XCreateImage( dpy, DefaultVisual( dpy, DefaultScreen( dpy ) ), 24, ZPixmap, 0, data, w, h, 32, 0 );
+
 	return ia_push_back( ximg, _file );
 }
 

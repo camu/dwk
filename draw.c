@@ -67,9 +67,7 @@ int draw_text( const char *_txt, int _x, int _y ) {
 
 int draw_img( int _index, int _x, int _y ) {
 	if( _index > nimg ) return _y;
-//	XPutImage( dpy, win, gc, img_arr[_index], 0, 0, _x, _y, img_arr[_index]->width, img_arr[_index]->height );
-	int ratio = CEIL( (float)img_arr[_index]->width/(float)IMG_COL_WIDTH );
-	XPutImage( dpy, win, gc, img_arr[_index], 0, 0, _x, _y, img_arr[_index]->width/ratio, img_arr[_index]->height/ratio );
+	XPutImage( dpy, win, gc, img_arr[_index], 0, 0, _x, _y, img_arr[_index]->width, img_arr[_index]->height );
 
 	char imgtitle[strlen( imgname_arr[_index] )+7]; // 7 = ' ' + '<' + up to 3 nums + '>' + '\0'
 	sprintf( imgtitle, "%s <%i>", imgname_arr[_index], _index );
