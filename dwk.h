@@ -4,10 +4,11 @@
 #define __DWK_H
 
 void dwk_init( );
-void add_div( void *_div );
+void dwk_close( );
+
+void parse( const char *_file );
 
 void draw_screen( );
-int draw_text( const char *_txt, int _x, int _y, int _w );
 
 void ch_col( const char *_fg, const char *_bg );
 

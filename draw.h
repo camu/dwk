@@ -3,7 +3,7 @@
 #ifndef __DRAW_H
 #define __DRAW_H
 
-int draw_text( const char *_txt, int _x, int _y, int _w );
+int draw_text( const char *_txt, int _x, int _y );
 int draw_img( int _index, int _x, int _y );
 
 void ch_col( const char *_fg, const char *_bg );

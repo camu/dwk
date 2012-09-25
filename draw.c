@@ -2,11 +2,10 @@
 
 #include "config.h"
 #include "dwk.h"
+#include "stuff.h"
 #include <string.h>
 #include <stdio.h>
 #include <X11/Xlib.h>
-
-#include "div.h"
 
 extern Display *dpy;
 extern Window win;
@@ -16,9 +15,10 @@ extern XFontStruct *xfs;
 extern int lh; // line height
 
 extern XImage **img_arr;
+extern char **imgname_arr;
 extern int nimg;
 
-int draw_text( const char *_txt, int _x, int _y, int _w ) {
+int draw_text( const char *_txt, int _x, int _y ) {
 	int x = _x, y = _y+lh;
 	int i, j, k, l = strlen( _txt );
 	char txt[l+1]; strcpy( txt, _txt );
@@ -54,7 +54,7 @@ int draw_text( const char *_txt, int _x, int _y, int _w ) {
 			i++;
 			continue;
 		} i++;
-		if( XTextWidth( xfs, txt+j, i-j ) >= _w ) {
+		if( XTextWidth( xfs, txt+j, i-j ) >= TXT_COL_WIDTH ) {
 			XDrawString( dpy, win, gc, x, y, txt+j, k-j );
 			x = _x; y += lh;
 			j = k+1;
@@ -67,8 +67,14 @@ int draw_text( const char *_txt, int _x, int _y, int _w ) {
 
 int draw_img( int _index, int _x, int _y ) {
 	if( _index > nimg ) return _y;
-	XPutImage( dpy, win, gc, img_arr[_index], 0, 0, _x, _y, img_arr[_index]->width, img_arr[_index]->height );
-	return _y+img_arr[_index]->height;
+//	XPutImage( dpy, win, gc, img_arr[_index], 0, 0, _x, _y, img_arr[_index]->width, img_arr[_index]->height );
+	int ratio = CEIL( (float)img_arr[_index]->width/(float)IMG_COL_WIDTH );
+	XPutImage( dpy, win, gc, img_arr[_index], 0, 0, _x, _y, img_arr[_index]->width/ratio, img_arr[_index]->height/ratio );
+
+	char imgtitle[strlen( imgname_arr[_index] )+7]; // 7 = ' ' + '<' + up to 3 nums + '>' + '\0'
+	sprintf( imgtitle, "%s <%i>", imgname_arr[_index], _index );
+	_y = draw_text( imgtitle, _x+20, _y+img_arr[_index]->height-10 )+10;
+	return _y;
 }
 
 void ch_col( const char *_fg, const char *_bg ) {

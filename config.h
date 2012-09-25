@@ -4,7 +4,9 @@
 #define __DWK_CONFIG_H
 
 #define DWK_FONT "fixed"
-#define LINE_WIDTH 500
+#define TXT_COL_WIDTH 500
+#define IMG_COL_WIDTH 300
+#define LNK_COL_WIDTH 200
 
 #define NORMFG "#ffffff"
 #define NORMBG "#222222"

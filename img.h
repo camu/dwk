@@ -13,7 +13,7 @@
 int load_img( const char *_file );
 int load_png( const char *_file );
 
-int ia_push_back( void *_ximg );
+int ia_push_back( void *_ximg, const char *_name );
 void free_ia( );
 
 #endif

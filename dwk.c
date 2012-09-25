@@ -1,7 +1,8 @@
 // See LICENSE for copyright info
 
+#define STRBUFLEN 512
+
 #include "config.h"
-#include "div.h"
 #include "dwk.h"
 #include "draw.h"
 #include "img.h"
@@ -21,38 +22,20 @@ XFontStruct *xfs;
 int lh; // line height
 
 extern XImage **img_arr;
+extern char **imgname_arr;
 extern int nimg;
 
-Div *all;
-int ndiv;
+char *str;
 
 int main( int argc, char *argv[] ) {
-	if( argc < 3 ) {
-		printf( "protip: ./dwk <png file> <text file>\n" );
+	if( argc < 2 ) {
+		printf( "protip: ./dwk <file>\n" );
 		return 0;
 	}
 
 	dwk_init( );
 
-	Div lipsum = create_div( );
-
-	FILE *lif = fopen( argv[2], "r" );
-	fseek( lif, 0, SEEK_END );
-	int len = ftell( lif );
-	fseek( lif, 0, SEEK_SET );
-	char lis[len+1];
-	int i; for( i = 0; i < len; i++ )
-		lis[i] = fgetc( lif );
-	lis[len] = 0;
-	fclose( lif );
-
-	ch_txt( lis, &lipsum );
-
-	int index = load_img( argv[1] );
-//	if( index < 0 ) dwk_err( "failed loading image" );
-	ch_img( index, &lipsum );
-
-	add_div( &lipsum );
+	parse( argv[1] );
 
 	XEvent ev;
 	for( ;; ) {
@@ -62,9 +45,7 @@ int main( int argc, char *argv[] ) {
 			draw_screen( );
 			break;
 		case ButtonPress:
-			free_div( &lipsum );
-			free_ia( );
-			XCloseDisplay( dpy );
+			dwk_close( );
 			return 0;
 		}
 	}
@@ -73,10 +54,10 @@ int main( int argc, char *argv[] ) {
 }
 
 void dwk_init( ) {
-	all = malloc( 1 );
-	ndiv = 0;
+	str = malloc( 1 );
 
 	img_arr = malloc( sizeof( XImage * ) );
+	imgname_arr = malloc( sizeof( char * ) );
 	nimg = 0;
 
 	char *dpy_env = getenv( "DISPLAY" );
@@ -100,20 +81,79 @@ void dwk_init( ) {
 	XMapWindow( dpy, win );
 }
 
-void add_div( void *_div ) {
-	Div *div = _div;
-	all = realloc( all, sizeof( Div )*(++ndiv) );
-	all[ndiv-1] = *div;
+void dwk_close( ) {
+	free( str );
+	free_ia( );
+	XCloseDisplay( dpy );
+}
+
+void parse( const char *_file ) {
+	FILE *fp = fopen( _file, "r" );
+
+	fseek( fp, 0, SEEK_END );
+	int len = ftell( fp );
+	fseek( fp, 0, SEEK_SET );
+
+	str = realloc( str, len+1 );
+	char c, n = fgetc( fp );
+
+	int slen = 0;
+	char *save = malloc( STRBUFLEN+1 );
+	char slnk = 0, simg = 0;
+
+	int i, pos; for( i = pos = 0; i < len; i++, pos++ ) {
+		c = n;
+		if( i == len-1 ) n = 0;
+		else n = fgetc( fp );
+
+		// handle links
+		if( c == ']' && n != ']' ) {
+			slnk = 0;
+			save[slen] = 0;
+			printf( "%s\n", save );
+			save = realloc( save, STRBUFLEN );
+		}
+		if( c == '[' && n != '[' ) {
+			slnk = 1;
+			slen = 0;
+		} else if( slnk ) {
+			save[slen] = c;
+			slen++;
+			if( slen % STRBUFLEN == 1 )
+				save = realloc( save, slen+STRBUFLEN+1 );
+		}
+
+		// handle imgs
+		if( c == '>' && n != '>' ) {
+			simg = 0;
+			save[slen] = 0;
+			int index = load_img( save );
+			if( index < 0 ) dwk_err( "failed loading image" );
+			save = realloc( save, STRBUFLEN );
+		}
+		if( c == '<' && n != '<' ) {
+			simg = 1;
+			slen = 0;
+		} else if( simg ) {
+			save[slen] = c;
+			slen++;
+			if( slen % STRBUFLEN == 1 )
+				save = realloc( save, slen+STRBUFLEN+1 );
+		}
+
+		str[pos] = c;
+	}
+	str[pos] = 0;
+
+	fclose( fp );
+
+	free( save );
 }
 
 void draw_screen( ) {
-	const int a = sizeof( Div );
-	int i, j; for( i = j = 0; i < ndiv; i++ ) {
-		if( all[i*a].imgind != -1 )
-			j = draw_img( all[i*a].imgind, 10, j );
-		if( all[i*a].txt != NULL )
-			j = draw_text( all[i*a].txt, 10, j, LINE_WIDTH )+10;
-	}
+	int i, j; for( i = j = 0; i < nimg; i++ )
+		j = draw_img( i, TXT_COL_WIDTH+20, j+10 );
+	draw_text( str, 10, 10 );
 }
 
 void dwk_err( const char *_err ) {
