@@ -19,31 +19,40 @@ extern char **imgname_arr;
 extern int nimg;
 
 int draw_text( const char *_txt, int _x, int _y ) {
-	int x = _x, y = _y+lh;
+	ch_col( NORMFG, NORMFG );
+
+	int x = _x, y = _y;
 	int i, j, k, l = strlen( _txt );
 	char txt[l+1]; strcpy( txt, _txt );
 	for( i = j = k = 0; i < l; ) {
-		if( txt[i] == '[' ) {
+		if( txt[i] == '[' || txt[i] == '<' ) {
+			char c = txt[i];
+
 			memmove( txt+i, txt+i+1, l-i-1 );
 			txt[l--] = 0;
-
-			if( txt[i] != '[' ) {
+			if( txt[i] != c ) {
 				XDrawString( dpy, win, gc, x, y, txt+j, i-j );
 				x += XTextWidth( xfs, txt+j, i-j );
 				j = i;
-				ch_col( LINKFG, LINKBG );
-			}
+
+				if( c == '[' )
+					ch_col( LINKFG, LINKBG );
+				else if( c == '<' )
+					ch_col( IMGFG, IMGBG );
+			} else i++;
 			continue;
-		} if( txt[i] == ']' ) {
+		} if( txt[i] == ']' || txt[i] == '>' ) {
+			char c = txt[i];
+
 			memmove( txt+i, txt+i+1, l-i-1 );
 			txt[l--] = 0;
 
-			if( txt[i] != ']' ) {
+			if( txt[i] != c ) {
 				XDrawImageString( dpy, win, gc, x, y, txt+j, i-j );
 				x += XTextWidth( xfs, txt+j, i-j );
 				j = i;
 				ch_col( NORMFG, NORMBG );
-			}
+			} else i++;
 			continue;
 		}
 
@@ -69,9 +78,9 @@ int draw_img( int _index, int _x, int _y ) {
 	if( _index > nimg ) return _y;
 	XPutImage( dpy, win, gc, img_arr[_index], 0, 0, _x, _y, img_arr[_index]->width, img_arr[_index]->height );
 
-	char imgtitle[strlen( imgname_arr[_index] )+7]; // 7 = ' ' + '<' + up to 3 nums + '>' + '\0'
-	sprintf( imgtitle, "%s <%i>", imgname_arr[_index], _index );
-	_y = draw_text( imgtitle, _x+20, _y+img_arr[_index]->height-10 )+10;
+	char imgtitle[strlen( imgname_arr[_index] )+9]; // 9 = ' ' + 2x'<' + up to 3 nums + 2x'>' + '\0'
+	sprintf( imgtitle, "%s <<%i>>", imgname_arr[_index], _index );
+	_y = draw_text( imgtitle, _x+20, _y+img_arr[_index]->height )+lh;
 	return _y;
 }
 

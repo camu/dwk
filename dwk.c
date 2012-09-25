@@ -25,6 +25,9 @@ extern XImage **img_arr;
 extern char **imgname_arr;
 extern int nimg;
 
+char **lnk_arr;
+int nlnk;
+
 char *str;
 
 int main( int argc, char *argv[] ) {
@@ -56,6 +59,9 @@ int main( int argc, char *argv[] ) {
 void dwk_init( ) {
 	str = malloc( 1 );
 
+	lnk_arr = malloc( sizeof( char * ) );
+	nlnk = 0;
+
 	img_arr = malloc( sizeof( XImage * ) );
 	imgname_arr = malloc( sizeof( char * ) );
 	nimg = 0;
@@ -84,6 +90,7 @@ void dwk_init( ) {
 void dwk_close( ) {
 	free( str );
 	free_ia( );
+	free_la( );
 	XCloseDisplay( dpy );
 }
 
@@ -107,13 +114,13 @@ void parse( const char *_file ) {
 		else n = fgetc( fp );
 
 		// handle links
-		if( c == ']' && n != ']' ) {
+		if( c == ']' ) {
 			slnk = 0;
 			save[slen] = 0;
-			printf( "%s\n", save );
+			la_push_back( save );
 			save = realloc( save, STRBUFLEN );
 		}
-		if( c == '[' && n != '[' ) {
+		if( c == '[' ) {
 			slnk = 1;
 			slen = 0;
 		} else if( slnk ) {
@@ -124,14 +131,14 @@ void parse( const char *_file ) {
 		}
 
 		// handle imgs
-		if( c == '>' && n != '>' ) {
+		if( c == '>' ) {
 			simg = 0;
 			save[slen] = 0;
 			int index = load_img( save );
 			if( index < 0 ) dwk_err( "failed loading image" );
 			save = realloc( save, STRBUFLEN );
 		}
-		if( c == '<' && n != '<' ) {
+		if( c == '<' ) {
 			simg = 1;
 			slen = 0;
 		} else if( simg ) {
@@ -150,10 +157,33 @@ void parse( const char *_file ) {
 	free( save );
 }
 
+int la_push_back( const char *_link ) {
+	lnk_arr = realloc( lnk_arr, sizeof( char * )*(++nlnk) );
+	lnk_arr[nlnk-1] = malloc( strlen( _link )+1 );
+	strcpy( lnk_arr[nlnk-1], _link );
+	return nlnk-1;
+}
+
+void free_la( ) {
+	int i; for( i = 0; i < nlnk; i++ )
+		free( lnk_arr[i] );
+	free( lnk_arr );
+	lnk_arr = NULL;
+}
+
 void draw_screen( ) {
-	int i, j; for( i = j = 0; i < nimg; i++ )
-		j = draw_img( i, TXT_COL_WIDTH+20, j+10 );
-	draw_text( str, 10, 10 );
+	int i, j;
+
+	for( i = j = 0; i < nimg; i++ )
+		j = draw_img( i, TXT_COL_WIDTH+20, j+lh );
+
+	for( i = j = 0; i < nlnk; i++ ) {
+		char title[strlen( lnk_arr[i] )+9];
+		sprintf( title, "%s [[%i]]", lnk_arr[i], i );
+		j = draw_text( title, TXT_COL_WIDTH+20+IMG_COL_WIDTH+20, j+lh );
+	}
+
+	draw_text( str, 10, 20 );
 }
 
 void dwk_err( const char *_err ) {

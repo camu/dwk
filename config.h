@@ -9,9 +9,11 @@
 #define LNK_COL_WIDTH 200
 
 #define NORMFG "#ffffff"
-#define NORMBG "#222222"
+#define NORMBG "#000000"
 #define LINKFG "#0000ff"
-#define LINKBG "#ff0000"
+#define LINKBG "#000000"
+#define IMGFG  "#00ff00"
+#define IMGBG  "#000000"
 
 #endif
 
