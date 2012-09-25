@@ -60,7 +60,7 @@ int load_png( const char *_file ) {
 	char *pixl = data;
 	int i, j; for( i = 0; i < h; i++ ) {
 		png_byte *row = rowp[i];
-		for( j = 0; j < w; j+=3 ) {
+		for( j = 0; j < w; j += ratio ) {
 				png_byte *pixel = row+j*3;
 				pixl[2] = pixel[0];
 				pixl[1] = pixel[1];
