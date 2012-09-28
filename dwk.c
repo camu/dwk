@@ -115,12 +115,24 @@ void parse( const char *_file ) {
 
 		// handle links
 		if( c == ']' ) {
+			if( n == ']' ) {
+				str[pos] = str[++pos] = ']';
+				i++;
+				n = fgetc( fp );
+				continue;
+			}
 			slnk = 0;
 			save[slen] = 0;
 			la_push_back( save );
 			save = realloc( save, STRBUFLEN );
 		}
 		if( c == '[' ) {
+			if( n == '[' ) {
+				str[pos] = str[++pos] = '[';
+				i++;
+				n = fgetc( fp );
+				continue;
+			}
 			slnk = 1;
 			slen = 0;
 		} else if( slnk ) {
@@ -132,6 +144,12 @@ void parse( const char *_file ) {
 
 		// handle imgs
 		if( c == '>' ) {
+			if( n == '>' ) {
+				str[pos] = str[++pos] = '>';
+				i++;
+				n = fgetc( fp );
+				continue;
+			}
 			simg = 0;
 			save[slen] = 0;
 			int index = load_img( save );
@@ -139,6 +157,12 @@ void parse( const char *_file ) {
 			save = realloc( save, STRBUFLEN );
 		}
 		if( c == '<' ) {
+			if( n == '<' ) {
+				str[pos] = str[++pos] = '<';
+				i++;
+				n = fgetc( fp );
+				continue;
+			}
 			simg = 1;
 			slen = 0;
 		} else if( simg ) {
