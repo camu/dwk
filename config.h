@@ -3,6 +3,8 @@
 #ifndef __DWK_CONFIG_H
 #define __DWK_CONFIG_H
 
+#define STRBUFLEN 512
+
 #define DWK_FONT "fixed"
 #define TXT_COL_WIDTH 500
 #define IMG_COL_WIDTH 300

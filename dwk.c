@@ -1,11 +1,10 @@
 // See LICENSE for copyright info
 
-#define STRBUFLEN 512
-
 #include "config.h"
 #include "dwk.h"
 #include "draw.h"
 #include "img.h"
+#include "forms.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -66,6 +65,12 @@ void dwk_init( ) {
 	imgname_arr = malloc( sizeof( char * ) );
 	nimg = 0;
 
+//	init_fa( );
+//	form_arr = malloc( sizeof( Form * ) );
+//	nform = 1;
+//	form_arr[0].data = malloc( sizeof( char * ) );
+
+
 	char *dpy_env = getenv( "DISPLAY" );
 	if( dpy_env ) dpy = XOpenDisplay( dpy_env );
 	else dpy = XOpenDisplay( NULL );
@@ -91,6 +96,7 @@ void dwk_close( ) {
 	free( str );
 	free_ia( );
 	free_la( );
+//	free_fa( );
 	XCloseDisplay( dpy );
 }
 
@@ -116,8 +122,8 @@ void parse( const char *_file ) {
 		// handle links
 		if( c == ']' ) {
 			if( n == ']' ) {
-				str[pos] = str[++pos] = ']';
-				i++;
+				str[pos] = str[pos+1] = ']';
+				i++; pos++;
 				n = fgetc( fp );
 				continue;
 			}
@@ -128,8 +134,8 @@ void parse( const char *_file ) {
 		}
 		if( c == '[' ) {
 			if( n == '[' ) {
-				str[pos] = str[++pos] = '[';
-				i++;
+				str[pos] = str[pos+1] = '[';
+				i++; pos++;
 				n = fgetc( fp );
 				continue;
 			}
@@ -145,8 +151,8 @@ void parse( const char *_file ) {
 		// handle imgs
 		if( c == '>' ) {
 			if( n == '>' ) {
-				str[pos] = str[++pos] = '>';
-				i++;
+				str[pos] = str[pos+1] = '>';
+				i++; pos++;
 				n = fgetc( fp );
 				continue;
 			}
@@ -158,8 +164,8 @@ void parse( const char *_file ) {
 		}
 		if( c == '<' ) {
 			if( n == '<' ) {
-				str[pos] = str[++pos] = '<';
-				i++;
+				str[pos] = str[pos+1] = '<';
+				i++; pos++;
 				n = fgetc( fp );
 				continue;
 			}
@@ -172,6 +178,35 @@ void parse( const char *_file ) {
 				save = realloc( save, slen+STRBUFLEN+1 );
 		}
 
+/*		// handle forms
+		if( c == ')' ) {
+			if( n == ')' ) {
+				str[pos] = str[pos+1] = ')';
+				i++; pos++;
+				n = fgetc( fp );
+				continue;
+			}
+			sfrm = 0;
+			save[slen] = 0;
+			int index = wa_push_back( currform, save );
+			save = realloc( save, STRBUFLEN );
+		}
+		if( c == '(' ) {
+			if( n == '(' ) {
+				str[pos] = str[pos+1] = '(';
+				i++; pos++;
+				n = fgetc( fp );
+				continue;
+			}
+			sfrm = 1;
+			slen = 0;
+		} else if( sfrm ) {
+			save[slen] = c;
+			slen++;
+			if( slen % STRBUFLEN == 1 )
+				save = realloc( save, slen+STRBUFLEN+1 );
+		}
+*/
 		str[pos] = c;
 	}
 	str[pos] = 0;
