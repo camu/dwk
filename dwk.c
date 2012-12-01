@@ -3,8 +3,11 @@
 #include "config.h"
 #include "dwk.h"
 #include "draw.h"
+#include "lnk.h"
 #include "img.h"
 #include "forms.h"
+#include "parse.h"
+#include "stuff.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,21 +16,15 @@
 
 Display *dpy;
 Window win;
-Pixmap *pics;
+Pixmap *pics = NULL;
 GC gc;
 XGCValues xgcval;
 Colormap colmap;
 XFontStruct *xfs;
 int lh; // line height
 
-extern XImage **img_arr;
-extern char **imgname_arr;
-extern int nimg;
-
-char **lnk_arr;
-int nlnk;
-
-char *str;
+char *str = NULL;
+int len;
 
 int main( int argc, char *argv[] ) {
 	if( argc < 2 ) {
@@ -37,7 +34,17 @@ int main( int argc, char *argv[] ) {
 
 	dwk_init( );
 
-	parse( argv[1] );
+	FILE *fp = fopen( argv[1], "r" );
+	fseek( fp, 0, SEEK_END );
+	len = ftell( fp );
+	fseek( fp, 0, SEEK_SET );
+	str = realloc( str, len+1 );
+	int i; for( i = 0; i < len; i++ )
+		str[i] = fgetc( fp );
+	str[len] = 0;
+	fclose( fp );
+
+	parse( );
 
 	XEvent ev;
 	for( ;; ) {
@@ -56,20 +63,9 @@ int main( int argc, char *argv[] ) {
 }
 
 void dwk_init( ) {
-	str = malloc( 1 );
-
-	lnk_arr = malloc( sizeof( char * ) );
-	nlnk = 0;
-
-	img_arr = malloc( sizeof( XImage * ) );
-	imgname_arr = malloc( sizeof( char * ) );
-	nimg = 0;
-
-//	init_fa( );
-//	form_arr = malloc( sizeof( Form * ) );
-//	nform = 1;
-//	form_arr[0].data = malloc( sizeof( char * ) );
-
+	init_lvec( );
+	init_ivec( );
+	init_fvec( );
 
 	char *dpy_env = getenv( "DISPLAY" );
 	if( dpy_env ) dpy = XOpenDisplay( dpy_env );
@@ -78,7 +74,7 @@ void dwk_init( ) {
 
 	win = XCreateSimpleWindow( dpy, DefaultRootWindow( dpy ), 0, 0, 200, 200, 2, WhitePixel( dpy, DefaultScreen( dpy ) ), BlackPixel( dpy, DefaultScreen( dpy ) ) );
 
-	pics = malloc( sizeof( Pixmap ) );
+	pics = realloc( pics, sizeof( Pixmap ) );
 
 	gc = XCreateGC( dpy, win, GCForeground|GCLineWidth|GCLineStyle, &xgcval );
 	colmap = DefaultColormap( dpy, DefaultScreen( dpy ) );
@@ -94,160 +90,24 @@ void dwk_init( ) {
 
 void dwk_close( ) {
 	free( str );
-	free_ia( );
-	free_la( );
-//	free_fa( );
+	free_ivec( );
+	free_lvec( );
+	free_fvec( );
 	XCloseDisplay( dpy );
-}
-
-void parse( const char *_file ) {
-	FILE *fp = fopen( _file, "r" );
-
-	fseek( fp, 0, SEEK_END );
-	int len = ftell( fp );
-	fseek( fp, 0, SEEK_SET );
-
-	str = realloc( str, len+1 );
-	char c, n = fgetc( fp );
-
-	int slen = 0;
-	char *save = malloc( STRBUFLEN+1 );
-	char slnk = 0, simg = 0;
-
-	int i, pos; for( i = pos = 0; i < len; i++, pos++ ) {
-		c = n;
-		if( i == len-1 ) n = 0;
-		else n = fgetc( fp );
-
-		// handle links
-		if( c == ']' ) {
-			if( n == ']' ) {
-				str[pos] = str[pos+1] = ']';
-				i++; pos++;
-				n = fgetc( fp );
-				continue;
-			}
-			slnk = 0;
-			save[slen] = 0;
-			la_push_back( save );
-			save = realloc( save, STRBUFLEN );
-		}
-		if( c == '[' ) {
-			if( n == '[' ) {
-				str[pos] = str[pos+1] = '[';
-				i++; pos++;
-				n = fgetc( fp );
-				continue;
-			}
-			slnk = 1;
-			slen = 0;
-		} else if( slnk ) {
-			save[slen] = c;
-			slen++;
-			if( slen % STRBUFLEN == 1 )
-				save = realloc( save, slen+STRBUFLEN+1 );
-		}
-
-		// handle imgs
-		if( c == '>' ) {
-			if( n == '>' ) {
-				str[pos] = str[pos+1] = '>';
-				i++; pos++;
-				n = fgetc( fp );
-				continue;
-			}
-			simg = 0;
-			save[slen] = 0;
-			int index = load_img( save );
-			if( index < 0 ) dwk_err( "failed loading image" );
-			save = realloc( save, STRBUFLEN );
-		}
-		if( c == '<' ) {
-			if( n == '<' ) {
-				str[pos] = str[pos+1] = '<';
-				i++; pos++;
-				n = fgetc( fp );
-				continue;
-			}
-			simg = 1;
-			slen = 0;
-		} else if( simg ) {
-			save[slen] = c;
-			slen++;
-			if( slen % STRBUFLEN == 1 )
-				save = realloc( save, slen+STRBUFLEN+1 );
-		}
-
-/*		// handle forms
-		if( c == ')' ) {
-			if( n == ')' ) {
-				str[pos] = str[pos+1] = ')';
-				i++; pos++;
-				n = fgetc( fp );
-				continue;
-			}
-			sfrm = 0;
-			save[slen] = 0;
-			int index = wa_push_back( currform, save );
-			save = realloc( save, STRBUFLEN );
-		}
-		if( c == '(' ) {
-			if( n == '(' ) {
-				str[pos] = str[pos+1] = '(';
-				i++; pos++;
-				n = fgetc( fp );
-				continue;
-			}
-			sfrm = 1;
-			slen = 0;
-		} else if( sfrm ) {
-			save[slen] = c;
-			slen++;
-			if( slen % STRBUFLEN == 1 )
-				save = realloc( save, slen+STRBUFLEN+1 );
-		}
-*/
-		str[pos] = c;
-	}
-	str[pos] = 0;
-
-	fclose( fp );
-
-	free( save );
-}
-
-int la_push_back( const char *_link ) {
-	lnk_arr = realloc( lnk_arr, sizeof( char * )*(++nlnk) );
-	lnk_arr[nlnk-1] = malloc( strlen( _link )+1 );
-	strcpy( lnk_arr[nlnk-1], _link );
-	return nlnk-1;
-}
-
-void free_la( ) {
-	int i; for( i = 0; i < nlnk; i++ )
-		free( lnk_arr[i] );
-	free( lnk_arr );
-	lnk_arr = NULL;
 }
 
 void draw_screen( ) {
 	int i, j;
+	extern int nimg, nlnk;
 
 	for( i = j = 0; i < nimg; i++ )
 		j = draw_img( i, TXT_COL_WIDTH+20, j+lh );
 
 	for( i = j = 0; i < nlnk; i++ ) {
-		char title[strlen( lnk_arr[i] )+9];
-		sprintf( title, "%s [[%i]]", lnk_arr[i], i );
+		char title[get_lnk_len( i )+9];
+		sprintf( title, "%s [[%i]]", get_lnk( i ), i );
 		j = draw_text( title, TXT_COL_WIDTH+20+IMG_COL_WIDTH+20, j+lh );
 	}
 
 	draw_text( str, 10, 20 );
-}
-
-void dwk_err( const char *_err ) {
-	int i, l = strlen( _err ); for( i = 0; i < l; i++ )
-		fputc( _err[i], stderr );
-	fputc( '\n', stderr ); fputc( '\0', stderr );
-	exit( 1 );
 }

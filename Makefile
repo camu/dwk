@@ -3,7 +3,7 @@
 
 include config.mk
 
-SRC = dwk.c draw.c img.c stuff.c
+SRC = dwk.c draw.c forms.c img.c lnk.c parse.c stuff.c
 OBJ = ${SRC:.c=.o}
 
 all: options dwk
@@ -11,7 +11,7 @@ all: options dwk
 options:
 	@echo -e "dwk build options\nCFLAGS\t=${CFLAGS}\nLDFLAGS\t${LDFLAGS}\nCC\t${CC}"
 
-${OBJ}: dwk.h draw.h img.h stuff.h
+${OBJ}: dwk.h draw.h forms.h img.h lnk.h parse.h stuff.h
 
 dwk: ${OBJ}
 	@echo CC -o $@

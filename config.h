@@ -5,6 +5,11 @@
 
 #define STRBUFLEN 512
 
+#define LNKSYM '-'
+#define IMGSYM '+'
+#define FRMSYM '='
+#define ESCSYM '\\'
+
 #define DWK_FONT "fixed"
 #define TXT_COL_WIDTH 500
 #define IMG_COL_WIDTH 300

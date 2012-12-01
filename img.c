@@ -14,8 +14,8 @@ extern Display *dpy;
 extern Window win;
 extern GC gc;
 
-XImage **img_arr;
-char **imgname_arr;
+XImage **ivec;
+char **invec; // image names
 int nimg;
 
 int load_img( const char *_file ) {
@@ -76,27 +76,33 @@ int load_png( const char *_file ) {
 
 	XImage *ximg = XCreateImage( dpy, DefaultVisual( dpy, DefaultScreen( dpy ) ), 24, ZPixmap, 0, data, w, h, 32, 0 );
 
-	return ia_push_back( ximg, _file );
+	return ivec_push_back( ximg, _file );
 }
 
-int ia_push_back( void *_ximg, const char *_name ) {
+int ivec_push_back( void *_ximg, const char *_name ) {
 	XImage *ximg = _ximg;
 	nimg++;
-	img_arr = realloc( img_arr, sizeof( XImage * )*nimg );
-	img_arr[nimg-1] = ximg;
-	imgname_arr = realloc( imgname_arr, sizeof( char * )*nimg );
-	imgname_arr[nimg-1] = malloc( strlen( _name )+1 );
-	strcpy( imgname_arr[nimg-1], _name );
+	ivec = realloc( ivec, sizeof( XImage * )*nimg );
+	ivec[nimg-1] = ximg;
+	invec = realloc( invec, sizeof( char * )*nimg );
+	invec[nimg-1] = malloc( strlen( _name )+1 );
+	strcpy( invec[nimg-1], _name );
 	return nimg-1;
 }
 
-void free_ia( ) {
+void init_ivec( ) {
+	ivec = NULL;
+	invec = NULL;
+	nimg = 0;
+}
+
+void free_ivec( ) {
 	int i; for( i = 0; i < nimg; i++ ) {
-		XDestroyImage( img_arr[i] );
-		free( imgname_arr[i] );
+		XDestroyImage( ivec[i] );
+		free( invec[i] );
 	}
-	free( img_arr );
-	img_arr = NULL;
-	free( imgname_arr );
-	imgname_arr = NULL;
+	free( ivec );
+	ivec = NULL;
+	free( invec );
+	invec = NULL;
 }

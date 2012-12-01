@@ -3,6 +3,8 @@
 #ifndef __STUFF_H
 #define __STUFF_H
 
+void dwk_err( const char *_err );
+
 int filext( const char *_file );
 
 int CEIL( float _x );

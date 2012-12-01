@@ -13,7 +13,8 @@
 int load_img( const char *_file );
 int load_png( const char *_file );
 
-int ia_push_back( void *_ximg, const char *_name );
-void free_ia( );
+int ivec_push_back( void *_ximg, const char *_name );
+void init_ivec( );
+void free_ivec( );
 
 #endif

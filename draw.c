@@ -14,8 +14,8 @@ extern Colormap colmap;
 extern XFontStruct *xfs;
 extern int lh; // line height
 
-extern XImage **img_arr;
-extern char **imgname_arr;
+extern XImage **ivec;
+extern char **invec;
 extern int nimg;
 
 int draw_text( const char *_txt, int _x, int _y ) {
@@ -76,11 +76,11 @@ int draw_text( const char *_txt, int _x, int _y ) {
 
 int draw_img( int _index, int _x, int _y ) {
 	if( _index > nimg ) return _y;
-	XPutImage( dpy, win, gc, img_arr[_index], 0, 0, _x, _y, img_arr[_index]->width, img_arr[_index]->height );
+	XPutImage( dpy, win, gc, ivec[_index], 0, 0, _x, _y, ivec[_index]->width, ivec[_index]->height );
 
-	char imgtitle[strlen( imgname_arr[_index] )+9]; // 9 = ' ' + 2x'<' + up to 3 nums + 2x'>' + '\0'
-	sprintf( imgtitle, "%s <<%i>>", imgname_arr[_index], _index );
-	_y = draw_text( imgtitle, _x+20, _y+img_arr[_index]->height )+lh;
+	char imgtitle[strlen( invec[_index] )+9]; // 9 = ' ' + 2x'<' + up to 3 nums + 2x'>' + '\0'
+	sprintf( imgtitle, "%s <<%i>>", invec[_index], _index );
+	_y = draw_text( imgtitle, _x+20, _y+ivec[_index]->height )+lh;
 	return _y;
 }
 
