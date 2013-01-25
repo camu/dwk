@@ -8,8 +8,7 @@
 #include "stuff.h"
 #include <stdlib.h>
 #include <setjmp.h>
-
-#include <stdio.h>
+#include <string.h>
 
 char *save = NULL;
 int slen;
@@ -59,27 +58,42 @@ void img( ) {
 		getsym( );
 	} while( !accept( IMGSYM ) );
 	savec( 0 );
-	int index = load_img( save );
-	if( index < 0 ) dwk_err( "failed loading image" );
+	if( load_img( save ) < 0 ) dwk_err( "failed loading image" );
 }
 
 void action( ) {
+	save_set( );
 	do {
+		savec( str[pos] );
 		getsym( );
 	} while( !accept( '\n' ) );
+	savec( 0 );
+	fel_action( -1, save );
 }
 
 void method( ) {
+	save_set( );
 	do {
+		savec( str[pos] );
 		getsym( );
 	} while( !accept( '\n' ) );
+	savec( 0 );
+	if( save[0] == 'P' )
+		fel_method( -1, 0 );
+	else
+		fel_method( -1, 1 );
 }
 
 void text( ) {
+	save_set( );
 	do {
+		savec( str[pos] );
 		getsym( );
 	} while( !accept( LNKSYM ) );
-}	
+	savec( 0 );
+	add_tel( -1, 1 );
+	tel_name( -1, -1, save );
+}
 
 void radioname( ) {
 	do {
@@ -96,8 +110,8 @@ void opt( ) {
 }
 
 void radio( ) {
+	add_rel( -1, 1 );
 	radioname( );
-
 	opt( );
 }
 
@@ -112,11 +126,17 @@ void field( ) {
 }
 
 void form( ) {
+	add_fel( );
 	action( );
-
 	method( );
-
 	field( );
+}
+
+void escape( ) {
+	int i, l = strlen( str );
+	for( i = pos; i < l; i++ )
+		str[i-1] = str[i];
+	pos--;
 }
 
 void data( ) {
@@ -130,7 +150,8 @@ void data( ) {
 		if( accept( FRMSYM ) )
 			form( );
 
-		accept( ESCSYM );
+		if( accept( ESCSYM ) )
+			escape( );
 
 		getsym( );
 	}

@@ -34,7 +34,7 @@ int load_png( const char *_file ) {
 
 	char head[8];
 	fread( head, 1, 8, img );
-	if( png_sig_cmp( (png_const_bytep )head, 0, 8 ) )
+	if( png_sig_cmp( (png_bytep )head, 0, 8 ) )
 		return -3;
 
 	png_structp pngp = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
