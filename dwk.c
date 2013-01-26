@@ -46,6 +46,8 @@ int main( int argc, char *argv[] ) {
 
 	parse( );
 
+	print_forms( );
+
 	XEvent ev;
 	for( ;; ) {
 		XNextEvent( dpy, &ev );

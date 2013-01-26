@@ -43,10 +43,10 @@ void set_rdata( int _fid, int _rid, const char *_sel ) {
 	if( _fid == -1 ) _fid = nf-1;
 	if( _rid == -1 ) _rid = fvec[_fid].nr-1;
 
-	int n = fvec[_fid].nr-1;
-	int i; for( i = 0; i < n; i++ )
-		if( strcmp( fvec[_fid].rvec[_rid].opts[i], _sel ) == 0 )
-			fvec[_fid].rvec[_rid].sel = i;
+//	int n = fvec[_fid].nr-1;
+//	int i; for( i = 0; i < n; i++ )
+//		if( strcmp( fvec[_fid].rvec[_rid].opts[i], _sel ) == 0 )
+//			fvec[_fid].rvec[_rid].sel = i;
 }
 
 void tel_name( int _fid, int _tid, const char *_str ) {
@@ -72,7 +72,16 @@ void rel_name( int _fid, int _rid, const char *_str ) {
 void rel_opt( int _fid, int _rid, const char *_str ) {
 	if( _fid == -1 ) _fid = nf-1;
 	if( _rid == -1 ) _rid = fvec[_fid].nr-1;
-}
+
+	opt_pb( fvec[_fid].rvec[_rid].opts, _str );
+
+/*	int nopts = fvec[_fid].rvec[_rid].nopts-1;
+	char **opts = fvec[_fid].rvec[_rid].opts;
+	opts = realloc( opts, nopts*sizeof( char* ) );
+	opts[nopts] = realloc( opts[nopts], strlen( _str )+1 );
+	strcpy( opts[nopts], _str );
+	fvec[_fid].rvec[_rid].opts = opts;
+*/}
 
 void fel_action( int _fid, const char *_str ) {
 	if( _fid == -1 ) _fid = nf-1;
@@ -108,7 +117,7 @@ int add_rel( int _fid, int _n ) {
 	int i; for( i = 0; i < _n; i++ ) {
 		fvec[_fid].rvec[fvec[_fid].nr+i].sel = 0;
 		fvec[_fid].rvec[fvec[_fid].nr+i].name = NULL;
-//		fvec[_fid].rvec[fvec[_fid].nr+i].opts = NULL;
+		init_ovec( &fvec[_fid].rvec[fvec[_fid].nr+i].opts );
 		fvec[_fid].rvec[fvec[_fid].nr+i].nopts = 0;
 	}
 	fvec[_fid].nr += _n;
@@ -124,8 +133,67 @@ int add_fel( ) {
 	return nf-1;
 }
 
-int get_nf( ) {
-	return nf;
+void print_forms( ) {
+	int i, j, k;
+	for( i = 0; i < nf; i++ ) {
+		printf( "FORM\n METHOD: %i\n ACTION: %s\n", fvec[i].method, fvec[i].action );
+		for( j = 0; j < fvec[i].nt; j++ )
+			printf( " TEXT\n  NAME: %s\n  DATA: %s\n", fvec[i].tvec[j].name, fvec[i].tvec[j].data );
+		for( j = 0; j < fvec[i].nt; j++ ) {
+			printf( " RADIO\n  NAME: %s\n  OPTS\n", fvec[i].rvec[j].name );
+			Opt *cur = fvec[i].rvec[j].opts;
+			k = 0;
+			do {
+				if( k == fvec[i].rvec[j].sel )
+					printf( "  >%s\n", cur->name );
+				else
+					printf( "   %s\n", cur->name );
+				k++;
+			} while( cur->next && ( cur = cur->next ) );
+		}
+	}
+}
+
+void init_ovec( Opt **_ovec ) {
+	*_ovec = malloc( sizeof( Opt ) );
+	(*_ovec)->name = NULL;
+	(*_ovec)->next = NULL;
+}
+
+void free_ovec( Opt *_ovec ) {
+	if( _ovec->next )
+		free_ovec( _ovec->next );
+	else {
+		free( _ovec->name );
+		free( _ovec );
+	}
+}
+
+Opt *opt_pb( Opt *_ovec, const char *_name ) {
+	Opt *cur = _ovec;
+	for( ; cur->next; cur = cur->next );
+	if( cur->name ) {
+		Opt *opt = malloc( sizeof( Opt ) );
+		opt->name = NULL;
+		opt->next = NULL;
+		cur->next = opt;
+		cur = cur->next;
+	}
+	cur->name = realloc( cur->name, strlen( _name )+1 );
+	strcpy( cur->name, _name );
+	return cur;
+}
+
+Opt *get_opt( Opt *_ovec, int _n ) {
+	Opt *cur = _ovec;
+	if( _n == -1 ) {
+		for( ; cur->next; )
+			cur = cur->next;
+	} else {
+		int i; for( i = 0; i < _n && cur->next; i++ )
+			cur = cur->next;
+	}
+	return cur;
 }
 
 void init_fvec( ) {
@@ -139,6 +207,10 @@ void free_fvec( ) {
 		for( j = 0; j < fvec[i].nt; j++ ) {
 			free( fvec[i].tvec[j].data );
 			free( fvec[i].tvec[j].name );
+		}
+		for( j = 0; j < fvec[i].nr; j++ ) {
+			free( fvec[i].rvec[j].name );
+			free_ovec( fvec[i].rvec[j].opts );
 		}
 		free( fvec[i].tvec );
 		free( fvec[i].rvec );

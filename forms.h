@@ -5,11 +5,17 @@ typedef struct {
 	char *name;
 } Text;
 
+typedef struct opt Opt;
+struct opt {
+	char *name;
+	Opt *next;
+};
+
 typedef struct {
 	int sel;
 	char *name;
 	int nopts;
-	char *opts[];
+	Opt *opts;
 } Radio;
 
 typedef struct {
@@ -36,6 +42,12 @@ void fel_method( int _fid, int _method );
 int add_tel( int _fid, int _n );
 int add_rel( int _fid, int _n );
 int add_fel( );
+
+void init_ovec( Opt **_ovec );
+Opt *opt_pb( Opt *_ovec, const char *_name );
+Opt *get_opt( Opt *_ovec, int _n );
+
+void print_forms( );
 
 void init_fvec( );
 void free_fvec( );

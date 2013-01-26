@@ -41,6 +41,13 @@ int accept( char _c ) {
 	} return 0;
 }
 
+void skip( ) {
+	int i, l = strlen( str );
+	for( i = pos; i < l; i++ )
+		str[i-1] = str[i];
+	pos--;
+}
+
 void link( ) {
 	save_set( );
 	do {
@@ -88,6 +95,7 @@ void text( ) {
 	save_set( );
 	do {
 		savec( str[pos] );
+//		skip( );
 		getsym( );
 	} while( !accept( LNKSYM ) );
 	savec( 0 );
@@ -96,16 +104,26 @@ void text( ) {
 }
 
 void radioname( ) {
+	save_set( );
 	do {
+		savec( str[pos] );
+//		skip( );
 		getsym( );
 	} while( !accept( '\n' ) );
+	savec( 0 );
+	rel_name( -1, -1, save );
 }
 
 void opt( ) {
 	for( ; !accept( IMGSYM ); ) {
+		save_set( );
 		do {
+			savec( str[pos] );
+//			skip( );
 			getsym( );
 		} while( !accept( '\n' ) );
+		savec( 0 );
+		rel_opt( -1, -1, save );
 	}
 }
 
